@@ -1,20 +1,4 @@
-local MAX_TAM = 1000;
-
-function toBits(num)
-  alg = tonumber(num)
-	print (alg)
-	-- returns a table of bits, least significant first.
-    local t={} -- will contain the bits
-    while alg > 0 do
-        rest=math.fmod(alg ,2)
-		print(rest)
-        t[#t+1]=rest
-        alg=(alg -rest)/2
-    end
-    return t
-end
-
-function numberstring(number)
+function toBits(number)
    local s = ""
    repeat
       local remainder = math.fmod(number,2)
@@ -23,6 +7,8 @@ function numberstring(number)
    until number==0
    return s
 end
+
+
 
 require('socket')
 
@@ -45,16 +31,23 @@ local filename = io.read()
 
 local file = assert(io.open(filename, 'r'))
 
-local data = file:read('*all') -- Message
+local data = file:read('*all')
+local payload = ""
 
--- Simulating package lose
+-- Simulating package loss
 math.randomseed(os.time())
 packet_lose_chance = math.random() % 10
 
-while(packet_lose_chance < 1) then -- 10% de chance de perda de pacote
-  print("PACOTE PERDIDO \"NO \"CAMINHO ")
-  print("TENTANDO NOVAMENTE")
-end
-Vcliente:send(data)
-
+	--if(packet_lose_chance < 5) then
+	--else
+	local i
+	for i=1,string.len(data) do
+		local bits = toBits(string.byte(data, i))
+		while(string.len(bits) < 8) do
+			bits = "0" .. bits
+		end
+		payload = payload .. bits
+	end
+	Vcliente:send(payload)
+	--end
 Vcliente:close()
