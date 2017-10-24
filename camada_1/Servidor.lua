@@ -1,28 +1,54 @@
-local socket = require("socket")				--funcao "magica" que reconhece a
-												--biblioteca a ser utilizada e a encontra no computador
-local server = assert(socket.bind("*", 0)) 		--"amarra" a variavel socket ao localhost e, nesse caso,
-												--a qualquer porta que o sistema quiser disponibilizar
+function toASCII(string)
+	retorno = ""
+	i = 1
+	while (i<string.len(string)) do
+		retorno = retorno .. string.char(tonumber(string.sub(string,i,(8+i)-1), 2))
+		i = i+8
+	end
+	return retorno
+end
 
-local ip, port = server:getsockname()			--retorna a informacao de endereco associada ao objeto
-												--server(IP e porta)
 
-print("Conecte ao endereco localhost na porta " .. port)--nos fala a real
+local socket = require("socket")
 
-local conexao = assert(server:accept())			--espera um cliente se conectar ao objeto server e
-												--retorna um objeto cliente ao qual server esta
-												--conectado
+local server = assert(socket.bind("192.168.56.1", 0)) 		--"amarra" a variavel socket ao localhost e, nesse caso, a qualquer porta que o sistema quiser disponibilizar
 
-reply = conexao:receive('*a');				--tenta receber dados de um objeto cliente chamado Vcliente
+local ip, port = server:getsockname()
 
-local preambule = reply[0-55]
-local frame_delimiter = reply[56-63]
-local mac_destination = reply[64-111]
-local mac_source = reply[112-159]
-local tag = reply[160-191]
-local ethertype = reply[192-207]
-local payload = reply[208-567]
-local frame_check_sequence = [568-599]
-local interpacket_gap = [600-695]
+print("Conecte ao endereco 192.168.56.1 na porta " .. port)
+
+local conexao = assert(server:accept())
+
+print("Recebendo o pedido de tamanho")
+
+reply = conexao:receive("*l");
+
+-- Recebendo o tamanho dos pacotes
+if reply == "Tamanho" then
+	print("Pedido de tamanho recebido, enviando tamanho")
+	conexao:send("96\n")							--arbitrario, poderia ser qualquer tamanho, nesse caso foi escolhido 12 bytes
+	print("Tamanho enviado")
+else
+	conexao:close()
+end
+
+-- Iniciando o recebimento de pacotes
+reply = conexao:receive("*a") -- recebe o pacote até terminar o envio
+
+-- Separando as partes para serem mostradas
+-- TALVEZ ISSO NÃO SEJA MAIS NECESSÁRIO DEPOIS QUE COLOCAR A CAMADA DE APLICAÇÃO
+local preambule = string.sub(reply,1,56)
+local frame_delimiter = string.sub(reply,57,64)
+local mac_destination = string.sub(reply,65,112)
+local mac_source = string.sub(reply,113,160)
+local tag = string.sub(reply,161,192)
+local ethertype = string.sub(reply,193,208)
+local payload = string.sub(reply,209,568)
+local frame_check_sequence = string.sub(reply,569,600)
+local interpacket_gap = string.sub(reply,601,696)
+
+
+print("---------PARTES DO QUADRO RECEBIDO---------")
 
 print("Preambulo: " .. preambule)
 print("Delimitador: " .. frame_delimiter)
@@ -35,6 +61,6 @@ print("Frame check sequence: " .. frame_check_sequence)
 print("Interpacket gap: " .. interpacket_gap)
 
 
-print("Mensagem : " .. reply)
+print("----------MENSAGEM----------\n" .. toASCII(reply))
 
 conexao:close()
