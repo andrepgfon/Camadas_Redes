@@ -8,7 +8,7 @@ var file = args.split('/')[1];
 
 const net = require('net');
 
-const client = net.createConnection({ port: 80, host: server }, () => {
+const client = net.createConnection({ port: 3000, host: server }, () => {
     
     client.write('\
 GET /' + file + ' HTTP/1.1\r\n\
