@@ -8,9 +8,25 @@ function toBits(number)
    return s
 end
 
-require('socket')
+local socket = require("socket")
 
--- ESSA PARTE VAI TER QUE SER AUTOMÁTICA POIS O IP E PORTA SERÃO PASSADOS NO BROWSER ----
+local CServer = assert(socket.bind("*", 3000))
+
+
+local ip, port = CServer:getsockname()
+
+
+print("Conecte ao endereco "..ip.." na porta " .. port)
+
+local conexao = assert(CServer:accept())
+
+data = conexao:receive('*a')
+
+conexao:close()
+
+print(data)
+
+-- ESSA PARTE VAI TER QUE SER AUTOMÃTICA POIS O IP E PORTA SERÃƒO PASSADOS NO BROWSER ----
 io.write ("Escolha um servidor > ") ;
 
 local servidor = io.read();
@@ -33,12 +49,13 @@ Vcliente:send("Tamanho\n")					--tamanho maximo a ser recebido de uma vez
 tamanho = Vcliente:receive("*l")			--recebe o tamanho maximo definido pelo servidor, para ser usado na construcao do frame
 print("String Tamanho recebida")
 io.write("Digite o nome do arquivo: ")
-local filename = io.read()
-local file = assert(io.open(filename, 'r'))
+
+--local filename = io.read()
+--local file = assert(io.open(filename, 'r'))
 
 
--- AQUI LÊ-SE O ARQUIVO QUE SERÁ ENVIADO. NO CASO DA CAMADA DE APLICAÇÃO VAI SER UMA REQUISIÇÃO
-local data = file:read('*all')
+-- AQUI LÃŠ-SE O ARQUIVO QUE SERÃ ENVIADO. NO CASO DA CAMADA DE APLICAÃ‡ÃƒO VAI SER UMA REQUISIÃ‡ÃƒO
+--local data = file:read('*all')
 
 
 local payload = ""
@@ -49,11 +66,11 @@ print("PDU Original: " .. data)
 math.randomseed(os.time())
 packet_lose_chance = math.random() % 10
 
--- Convertendo PDU para binário de 8 bits cada palavra
+-- Convertendo PDU para binÃ¡rio de 8 bits cada palavra
 local i
 for i=1,string.len(data) do											--percorre data
-	local bits = toBits(string.byte(data, i))						--armazena em bits os números transformados em bits que estiverem em data
-	while(string.len(bits) < 8) do									--concatena 0 a esquerda de bits enquanto não tiver o tamanho 8
+	local bits = toBits(string.byte(data, i))						--armazena em bits os nÃºmeros transformados em bits que estiverem em data
+	while(string.len(bits) < 8) do									--concatena 0 a esquerda de bits enquanto nÃ£o tiver o tamanho 8
 		bits = "0" .. bits
 	end
 	payload = payload .. bits										--concatena bits com payload
@@ -64,7 +81,7 @@ print("PDU convertida para binario e enviada: " .. payload)
 -- Enviando o trem
 i = 1
 while (i<string.len(payload)) do 									--enquanto i for menor que o tamanho total de payload
-	local partialPayload = string.sub(payload,i,(tamanho+i)-1)  	--atribui a partialPayload uma substring de payload que começa em i e termina em
+	local partialPayload = string.sub(payload,i,(tamanho+i)-1)  	--atribui a partialPayload uma substring de payload que comeÃ§a em i e termina em
 	while(true) do
 		if(packet_lose_chance < 2) then
 			print("Pacote Perdido!")
@@ -75,7 +92,7 @@ while (i<string.len(payload)) do 									--enquanto i for menor que o tamanho t
 		end															--envia o conteudo de partialPayload ao cliente
 		packet_lose_chance = (packet_lose_chance + math.random()) % 10
 	end
-	i = i+tamanho													--faz i começar no próximo "frame"
+	i = i+tamanho													--faz i comeÃ§ar no prÃ³ximo "frame"
 end
 
 
