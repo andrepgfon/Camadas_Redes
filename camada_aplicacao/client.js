@@ -1,9 +1,10 @@
-if(!process.argv[2] || !process.argv[3]) {
-    return console.log('Uso: node client.js <servidor> <arquivo>');
+if(!process.argv[2]) {
+    return console.log('Uso: node client.js <endereço>');
 }
 
-var server = process.argv[2];
-var file = process.argv[3];
+var args = process.argv[2];
+var server = args.split('/')[0];
+var file = args.split('/')[1];
 
 const net = require('net');
 
